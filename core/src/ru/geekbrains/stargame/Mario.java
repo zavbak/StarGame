@@ -82,4 +82,8 @@ public class Mario {
 
         //position.add(velocity);
     }
+
+    public void dispose(){
+        imgSpase.dispose();
+    }
 }
