@@ -12,7 +12,7 @@ import com.badlogic.gdx.math.Vector2;
 
 public class StarGame extends Base2DScreen {
 	SpriteBatch batch;
-	//Texture imgSpase;
+	//Texture imgMario;
 	DrawFone drowFone;
 	Mario mario;
 
@@ -27,7 +27,7 @@ public class StarGame extends Base2DScreen {
 	@Override
 	public void show() {
 		batch = new SpriteBatch();
-		//imgSpase = new Texture("spase.png");
+		//imgMario = new Texture("spase.png");
 		drowFone = new DrawFone(batch);
 		mario = new Mario(batch);
 		infoText = new InfoText(batch);
@@ -71,6 +71,6 @@ public class StarGame extends Base2DScreen {
 	public void dispose () {
 		mario.dispose();
 		batch.dispose();
-		//imgSpase.dispose();
+		//imgMario.dispose();
 	}
 }

@@ -6,7 +6,7 @@ import com.badlogic.gdx.math.Vector2;
 
 public class Mario {
     SpriteBatch batch;
-    Texture imgSpase;
+    Texture imgMario;
 
     InfoText infoText;
 
@@ -39,7 +39,7 @@ public class Mario {
 
     public Mario(SpriteBatch batch) {
         this.batch = batch;
-        imgSpase = new Texture("mario.png");
+        imgMario = new Texture("mario.png");
         infoText = new InfoText(batch);
 
         position    = new Vector2(100,100);
@@ -53,7 +53,7 @@ public class Mario {
     public void draw() {
         int width = 0;
         int hight = 0;
-        batch.draw(imgSpase, position.x, position.y);
+        batch.draw(imgMario, position.x, position.y);
 
         infoText.setText("point:" + position.x + " " + position.y + "\n" +
                          "destination:"  + destination.x + " " + destination.y + "\n" +
@@ -72,18 +72,15 @@ public class Mario {
         setVelocity();
 
         Vector2 movement = new Vector2();
-
         movement.set(velocity);
         if (position.dst2(destination) > movement.len2()) {
             position.add(movement);
         } else {
             position.set(destination);
         }
-
-        //position.add(velocity);
     }
 
     public void dispose(){
-        imgSpase.dispose();
+        imgMario.dispose();
     }
 }
