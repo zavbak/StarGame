@@ -22,6 +22,13 @@ public class Sprite extends Rect {
         regions[0] = region;
     }
 
+    public Sprite(TextureRegion[] regions){
+        if (regions == null || regions.length ==0){
+            throw new RuntimeException("region == null or regions.lenth = 0");
+        }
+        this.regions = regions;
+    }
+
     public void draw(SpriteBatch batch) {
         batch.draw(
                 regions[frame], // текущий регион
@@ -31,6 +38,12 @@ public class Sprite extends Rect {
                 scale, scale, // масштаб по оси x и y
                 angle // угол вращения
         );
+    }
+
+    public void setHeightProportion(float height) {
+        setHeight(height);
+        float aspect = regions[frame].getRegionWidth() / (float) regions[frame].getRegionHeight();
+        setWidth(height * aspect);
     }
 
     public void resize(Rect worldBounds) {
