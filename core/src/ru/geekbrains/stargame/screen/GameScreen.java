@@ -45,7 +45,7 @@ public class GameScreen extends Base2DScreen {
             star[i] = new Star(atlas);
         }
 
-        ship =  Ship.getInstance(mainAtlas);
+        ship =  Ship.getInstanse(mainAtlas);
 
     }
 
@@ -85,6 +85,18 @@ public class GameScreen extends Base2DScreen {
 
     public void deleteAllDestroyed() {
 
+    }
+
+    @Override
+    public boolean keyDown(int keycode) {
+        ship.keyDown(keycode);
+        return super.keyDown(keycode);
+    }
+
+    @Override
+    public boolean keyUp(int keycode) {
+        ship.keyUp(keycode);
+        return super.keyUp(keycode);
     }
 
     @Override
