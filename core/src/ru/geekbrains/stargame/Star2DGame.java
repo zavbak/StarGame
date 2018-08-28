@@ -11,5 +11,3 @@ public class Star2DGame extends Game {
         setScreen(new MenuScreen(this));
     }
 }
-
-

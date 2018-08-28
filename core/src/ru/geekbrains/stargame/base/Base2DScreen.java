@@ -149,6 +149,7 @@ public class Base2DScreen implements Screen, InputProcessor {
     }
 
     public boolean touchDragged(Vector2 touch, int pointer) {
+
         return false;
     }
 
