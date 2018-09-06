@@ -9,39 +9,45 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Array;
 
 import java.util.List;
 
 import ru.geekbrains.stargame.base.ActionListener;
 import ru.geekbrains.stargame.base.Base2DScreen;
+import ru.geekbrains.stargame.base.Font;
 import ru.geekbrains.stargame.math.Rect;
 import ru.geekbrains.stargame.screen.gamescreen.Bullet;
-import ru.geekbrains.stargame.screen.gamescreen.ButtonSartNewGame;
+import ru.geekbrains.stargame.screen.gamescreen.ButtonNewGame;
 import ru.geekbrains.stargame.screen.gamescreen.Enemy;
 import ru.geekbrains.stargame.screen.gamescreen.MainShip;
 import ru.geekbrains.stargame.screen.gamescreen.MessageGameOver;
-import ru.geekbrains.stargame.screen.menuscreen.ButtonExit;
+import ru.geekbrains.stargame.screen.gamescreen.TrackingStar;
 import ru.geekbrains.stargame.screen.pool.BulletPool;
 import ru.geekbrains.stargame.screen.pool.EnemyPool;
 import ru.geekbrains.stargame.screen.pool.ExplosionPool;
 import ru.geekbrains.stargame.screen.sprites.Background;
-import ru.geekbrains.stargame.screen.sprites.Star;
+import ru.geekbrains.stargame.screen.sprites.Life;
 import ru.geekbrains.stargame.utils.EnemyEmitter;
 
 
 public class GameScreen extends Base2DScreen implements ActionListener {
 
-
-
     private enum State {PLAYING, GAME_OVER}
 
     private static final int STAR_COUNT = 56;
+    private static final float FONT_SIZE = 0.03f;
+
+    private static final String FRAGS = "Frags: ";
+    private static final String HP = "HP: ";
+    private static final String LEVEL = "Level: ";
 
     private Background background;
     private Texture bgTexture;
     private TextureAtlas atlas;
 
-    private Star star[];
+    private TrackingStar star[];
     private MainShip mainShip;
 
     private BulletPool bulletPool = new BulletPool();
@@ -58,7 +64,15 @@ public class GameScreen extends Base2DScreen implements ActionListener {
     private State state;
 
     private MessageGameOver messageGameOver;
-    private ButtonSartNewGame buttonSartNewGame;
+    private ButtonNewGame buttonNewGame;
+
+    private Font font;
+    private StringBuilder sbFrags = new StringBuilder();
+    private StringBuilder sbHP = new StringBuilder();
+    private StringBuilder sbLevel = new StringBuilder();
+
+    private Texture lifeTexture;
+    private Life[] lives;
 
 
     int frags;
@@ -76,10 +90,7 @@ public class GameScreen extends Base2DScreen implements ActionListener {
         bgTexture = new Texture("textures/bg.png");
         background = new Background(new TextureRegion(bgTexture));
         atlas = new TextureAtlas("textures/mainAtlas.tpack");
-        star = new Star[STAR_COUNT];
-        for (int i = 0; i < star.length; i++) {
-            star[i] = new Star(atlas);
-        }
+        star = new TrackingStar[STAR_COUNT];
         bulletSound = Gdx.audio.newSound(Gdx.files.internal("sounds/bullet.wav"));
         laserSound = Gdx.audio.newSound(Gdx.files.internal("sounds/laser.wav"));
         explosionSound = Gdx.audio.newSound(Gdx.files.internal("sounds/explosion.wav"));
@@ -88,12 +99,22 @@ public class GameScreen extends Base2DScreen implements ActionListener {
         enemyPool = new EnemyPool(bulletPool, explosionPool, worldBounds, mainShip, bulletSound);
         enemyEmitter = new EnemyEmitter(atlas, worldBounds, enemyPool);
         messageGameOver = new MessageGameOver(atlas);
-        buttonSartNewGame = new ButtonSartNewGame(atlas, this, 1f);
-        startNewGame();
-    }
+        buttonNewGame = new ButtonNewGame(atlas, this);
+        for (int i = 0; i < star.length; i++) {
+            star[i] = new TrackingStar(atlas, mainShip.getV());
+        }
+        font = new Font("font/font.fnt", "font/font.png");
+        font.setWorldSize(FONT_SIZE);
 
-    @Override
-    public void actionPerformed(Object src) {
+
+
+        lives = new Life[5];
+        for (int i = 0; i < lives.length; i++) {
+            Life life = new Life(new TextureRegion(new Texture("textures/life.png")));
+            life.setBottom(life.getBottom() + 0.05f*i);
+            lives[i] = life;
+        }
+
         startNewGame();
     }
 
@@ -120,9 +141,36 @@ public class GameScreen extends Base2DScreen implements ActionListener {
         enemyPool.drawActiveSprites(batch);
         if (state == State.GAME_OVER) {
             messageGameOver.draw(batch);
-            buttonSartNewGame.draw(batch);
+            buttonNewGame.draw(batch);
+        }else{
+
+            for (int i = 0; i < lives.length; i++) {
+                lives[i].draw(batch);
+            }
         }
+
+        printInfo();
         batch.end();
+    }
+
+    public void printInfo() {
+        sbFrags.setLength(0);
+        sbHP.setLength(0);
+        sbLevel.setLength(0);
+        font.draw(batch, sbFrags.append(FRAGS).append(frags), worldBounds.getLeft(), worldBounds.getTop());
+        font.draw(batch, sbHP.append(HP).append(mainShip.getHp()), worldBounds.pos.x, worldBounds.getTop(), Align.center);
+        font.draw(batch, sbLevel.append(LEVEL).append(enemyEmitter.getLevel()), worldBounds.getRight(), worldBounds.getTop(),  Align.right);
+
+        for (int i = 0; i < lives.length; i++) {
+            float  cel = 100/5;
+            if (cel*(i + 1) > mainShip.getHp() ){
+                lives[i].destroy();
+            }else{
+                lives[i].flushDestroy();
+            }
+        }
+
+
     }
 
     public void update(float delta) {
@@ -138,7 +186,7 @@ public class GameScreen extends Base2DScreen implements ActionListener {
                 mainShip.update(delta);
                 bulletPool.updateActiveSprites(delta);
                 enemyPool.updateActiveSprites(delta);
-                enemyEmitter.generateEnemies(delta);
+                enemyEmitter.generateEnemies(delta, frags);
                 break;
             case GAME_OVER:
                 break;
@@ -207,8 +255,10 @@ public class GameScreen extends Base2DScreen implements ActionListener {
         for (int i = 0; i < star.length; i++) {
             star[i].resize(worldBounds);
         }
-        buttonSartNewGame.resize(worldBounds);
         mainShip.resize(worldBounds);
+        for (int i = 0; i < lives.length; i++) {
+            lives[i].resize(worldBounds);
+        }
     }
 
     @Override
@@ -221,40 +271,68 @@ public class GameScreen extends Base2DScreen implements ActionListener {
         enemyPool.dispose();
         bulletSound.dispose();
         music.dispose();
+        font.dispose();
+        lifeTexture.dispose();
     }
 
     @Override
     public boolean keyDown(int keycode) {
-        mainShip.keyDown(keycode);
+        if (state == State.PLAYING) {
+            mainShip.keyDown(keycode);
+        }
         return super.keyDown(keycode);
     }
 
     @Override
     public boolean keyUp(int keycode) {
-        mainShip.keyUp(keycode);
+        if (state == State.PLAYING) {
+            mainShip.keyUp(keycode);
+        }
         return super.keyUp(keycode);
     }
 
     @Override
     public boolean touchDown(Vector2 touch, int pointer) {
-        mainShip.touchDown(touch, pointer);
-        buttonSartNewGame.touchDown(touch, pointer);
+        if (state == State.PLAYING) {
+            mainShip.touchDown(touch, pointer);
+        } else {
+            buttonNewGame.touchDown(touch, pointer);
+        }
         return super.touchDown(touch, pointer);
     }
 
     @Override
     public boolean touchUp(Vector2 touch, int pointer) {
-        buttonSartNewGame.touchUp(touch, pointer);
-        mainShip.touchUp(touch, pointer);
+        if (state == State.PLAYING) {
+            mainShip.touchUp(touch, pointer);
+        } else {
+            buttonNewGame.touchUp(touch, pointer);
+        }
         return super.touchUp(touch, pointer);
     }
 
     private void startNewGame() {
         state = State.PLAYING;
+
         frags = 0;
+
         mainShip.startNewGame();
+        enemyEmitter.startNewGame();
+
         bulletPool.freeAllActiveObjects();
         enemyPool.freeAllActiveObjects();
         explosionPool.freeAllActiveObjects();
+
+
+
     }
+
+    @Override
+    public void actionPerformed(Object src) {
+        if (src == buttonNewGame) {
+            startNewGame();
+        }
+    }
+
+
 }
